@@ -1,7 +1,11 @@
 import RPi.GPIO as GPIO
 import time 
 class R2R_ADC:
+<<<<<<< HEAD
     def __init__(self, dynamic_range, compare_time = 0.02, verbose = False):
+=======
+    def __init__(self, dynamic_range, compare_time = 0.01, verbose = False):
+>>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
         self.dynamic_range = dynamic_range
         self.verbose = verbose
         self.compare_time = compare_time
@@ -26,7 +30,13 @@ class R2R_ADC:
             GPIO.output(pin, bit_value)
                 
                 
+<<<<<<< HEAD
                
+=======
+                ##if self.verbose:
+                ##print(f" Пин {pin} (бит {7-i}): {bit_value} ")
+
+>>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
     def sequential_couting_adc(self):
         if self.verbose:
             print("R2R_ADC: Запуск последовательного преобразования АЦП")
@@ -45,12 +55,20 @@ class R2R_ADC:
                 print(f"Число {number}, Напряжение ЦАП: {voltage_dac:.2f}В, Компаратор: {comparator_state}")
             if comparator_state == GPIO.HIGH:
                 if self.verbose:
+<<<<<<< HEAD
                     print(f"Число {number}, Напряжение на ЦАП: {voltage_dac:.2f}В, Компаратор: {comparator_state}")
                 return number
                     
         if self.verbose:
            print(f"R2R_ADC: Превышение не достигнуто. Возвращаем максимум: {max_number}")
         return max_number
+=======
+                    return number
+                    
+            if self.verbose:
+                print(f"R2R_ADC: Превышение не достигнуто. Возвращаем максимум: {max_number}")
+            return max_number
+>>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
 
 
     def get_sc_voltage(self):
@@ -79,13 +97,18 @@ class R2R_ADC:
 
 if __name__ == "__main__":
     try:
+<<<<<<< HEAD
         adc=R2R_ADC(dynamic_range=3.13   , compare_time=0.01, verbose=False)
+=======
+        adc=R2R_ADC(dynamic_range=3.28, compare_time=0.01, verbose=False)
+>>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
         while True:
             try:
                 voltage = adc.get_sc_voltage()
                 print(f"Напряжение: {voltage:.3f} В") 
                 time.sleep(0.5)
             except KeyboardInterrupt:
+<<<<<<< HEAD
                 print("\nПрерывание пользователем")
                 break
     except Exception as e:
@@ -93,3 +116,9 @@ if __name__ == "__main__":
     finally:
         if 'adc' in locals():
             adc.__del__()
+=======
+                break
+    finally:
+        if 'adc' in locals():
+            adc.__del__()
+>>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
