@@ -1,11 +1,12 @@
 import RPi.GPIO as GPIO
-import time 
+import time
+
+
+maxVoltage = 255
+
+
 class R2R_ADC:
-<<<<<<< HEAD
-    def __init__(self, dynamic_range, compare_time = 0.02, verbose = False):
-=======
     def __init__(self, dynamic_range, compare_time = 0.01, verbose = False):
->>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
         self.dynamic_range = dynamic_range
         self.verbose = verbose
         self.compare_time = compare_time
@@ -17,108 +18,73 @@ class R2R_ADC:
         GPIO.setup(self.bits_gpio, GPIO.OUT, initial = 0)
         GPIO.setup(self.comp_gpio, GPIO.IN)
 
-    def number_to_dac(self, number):
-        if number <0 or number > 255:
-            raise ValueError(f"Число {number} вне диапазона 0-255 для 8-битного ЦАП")
-        binary_str = format(number, '08b')
+    def deinit(self):
+        GPIO.output(self.bits_gpio, 0)
+        GPIO.cleanup()
 
-        if self.verbose:
-            print(f"R2R_ADC: Подаем число {number} (бинарно: {binary_str})) на ЦАП")
+    def set_number(self, number):
+        binary = [int(element) for element in bin(number)[2:].zfill(8)][::1]
+        GPIO.output(self.bits_gpio, binary)
 
-        for i, pin in enumerate(self.bits_gpio):
-            bit_value = int(binary_str[i])
-            GPIO.output(pin, bit_value)
-                
-                
-<<<<<<< HEAD
-               
-=======
-                ##if self.verbose:
-                ##print(f" Пин {pin} (бит {7-i}): {bit_value} ")
-
->>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
     def sequential_couting_adc(self):
-        if self.verbose:
-            print("R2R_ADC: Запуск последовательного преобразования АЦП")
-
-        max_number = 255
-
-        for number in range(max_number + 1):
-            self.number_to_dac(number)
-
+        for value in range(1, 256):
+            self.set_number(value)
             time.sleep(self.compare_time)
+            comparatorValue = GPIO.input(self.comp_gpio)
 
-            comparator_state = GPIO.input(self.comp_gpio)
-
-            if self.verbose: 
-                voltage_dac = (number / max_number) * self.dynamic_range
-                print(f"Число {number}, Напряжение ЦАП: {voltage_dac:.2f}В, Компаратор: {comparator_state}")
-            if comparator_state == GPIO.HIGH:
-                if self.verbose:
-<<<<<<< HEAD
-                    print(f"Число {number}, Напряжение на ЦАП: {voltage_dac:.2f}В, Компаратор: {comparator_state}")
-                return number
-                    
-        if self.verbose:
-           print(f"R2R_ADC: Превышение не достигнуто. Возвращаем максимум: {max_number}")
-        return max_number
-=======
-                    return number
-                    
-            if self.verbose:
-                print(f"R2R_ADC: Превышение не достигнуто. Возвращаем максимум: {max_number}")
-            return max_number
->>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
-
+            if comparatorValue == 0:
+                return value - 1
+        
+        return maxVoltage
 
     def get_sc_voltage(self):
         digital_value = self.sequential_couting_adc()
         voltage = (digital_value / 255) * self.dynamic_range
         
-        if self.verbose:
-            print(f"R2R_ADC: Цифровое значение: {digital_value}, Напряжение: {voltage:.3f}В")
+        return voltage
+    
+    def successive_approximation_adc(self):
+        result = 0
+
+        for bit in range(7, -1, -1):
+            test_value = result | (1 << bit)
+            self.set_number(test_value)
+            time.sleep(self.compare_time)
+
+            comparator_value = GPIO.input(self.comp_gpio)
+
+            if comparator_value == 1:
+                result = test_value
+            
+            return result
+    
+    def get_sar_voltage(self):
+        digital_value = self.successive_approximation_adc()
+        voltage = digital_value*self.dynamic_range/255
 
         return voltage
-    def __del__(self):
+'''
+if __name__ == "__main__":
+    try:
+        adc = R2R_ADC(3.281)
 
-        try:
-            for pin in self.bits_gpio:
-                GPIO.output(pin, GPIO.LOW)
-
-            GPIO.cleanup()
-
-            if self.verbose:
-                print("R2R_ADC: GPIO очищен")
-        except Exception as e:
-            if self.verbose:
-                print(f"R2R_ADC: Ошибка при очистке: {e}")
-
-
+        while True:
+            voltage = adc.get_sc_voltage()
+            print(voltage)
+            time.sleep(1)
+        
+    finally:
+        adc.deinit()
+'''
 
 if __name__ == "__main__":
     try:
-<<<<<<< HEAD
-        adc=R2R_ADC(dynamic_range=3.13   , compare_time=0.01, verbose=False)
-=======
-        adc=R2R_ADC(dynamic_range=3.28, compare_time=0.01, verbose=False)
->>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
+        adc = R2R_ADC(3.281)
+
         while True:
-            try:
-                voltage = adc.get_sc_voltage()
-                print(f"Напряжение: {voltage:.3f} В") 
-                time.sleep(0.5)
-            except KeyboardInterrupt:
-<<<<<<< HEAD
-                print("\nПрерывание пользователем")
-                break
-    except Exception as e:
-        print(f"Ошибка: {e}")
+            voltage = adc.get_sar_voltage()
+            print(voltage)
+            time.sleep(1)
+    
     finally:
-        if 'adc' in locals():
-            adc.__del__()
-=======
-                break
-    finally:
-        if 'adc' in locals():
-            adc.__del__()
->>>>>>> 47d8e4cbebfa4cb9532ef42c218fb5791631ad1a
+        adc.deinit()
